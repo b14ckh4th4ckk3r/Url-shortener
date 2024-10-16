@@ -5,6 +5,7 @@ const shortid = require("shortid");
 
 async function handleGenerateNewShortUrl(req,res) {
     const body  = req.body;
+    console.log(body)
     if(!body.url) return res.status(400).json({msg: "Url is required"});
     const shortId = shortid()
     await Url.create({
@@ -13,7 +14,7 @@ async function handleGenerateNewShortUrl(req,res) {
         visitedHistory: [],
 
     })
-    return res.json({id: shortId})
+    return res.render("home",{id: shortId})
 }
 
 
