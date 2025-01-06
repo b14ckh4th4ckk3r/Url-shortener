@@ -1,10 +1,17 @@
 const express = require("express");
-const UrlRoute = require("./routes/Url")
-const Url = require("./models/Url");
-const path = require("path")
-const StaticRoute = require("./routes/staticRouter")
-const { connectMongodb } = require("./connection");
+const path = require("path");
 const exp = require("constants");
+const cookieParser = require("cookie-parser");
+const { connectMongodb } = require("./connection");
+
+const Url = require("./models/Url");
+
+const UrlRoute = require("./routes/Url")
+const StaticRoute = require("./routes/staticRouter")
+const userRoute = require("./routes/user")
+
+
+const {restrictToLoggedinUserOnly, checkAuth} = require("./middleware/auth")
 
 
 const app = express();
@@ -19,11 +26,15 @@ connectMongodb("mongodb://localhost:27017/shortUrl")
 app.set("view engine","ejs")
 app.set("views",path.resolve("./views"))
 
-app.use(express.json())
-app.use(express.urlencoded({extended: false}))
+app.use(express.json());
+app.use(express.urlencoded({extended: false}));
+app.use(cookieParser());
 
-app.use("/url", UrlRoute);
-app.use("/", StaticRoute);
+app.use("/url",restrictToLoggedinUserOnly, UrlRoute);
+app.use("/user",userRoute);
+app.use("/", checkAuth, StaticRoute);
+
+
 app.get("/demo/:getId", async (req, res) => {
     const shortId = req.params.getId;
     const entry = await Url.findOneAndUpdate({
@@ -36,6 +47,7 @@ app.get("/demo/:getId", async (req, res) => {
         }
 
     })
+    console.log(entry)
     res.redirect(entry.redirectUrl);
 })
 
